@@ -1,0 +1,41 @@
+---
+- hosts: all
+  become: true
+  vars:
+  - dockerfile_folder: "Dockerfile"
+  - docker_image_name: "ssh_os:1"
+  - docker_container_name: "test_os"
+  - patting_ssh_port: 2222
+  - patting_http_port. 80
+  tasks:
+  
+  - name: copy dockerfile
+    copy:
+      src: "{{ dockerfile_folder }}"
+      dest: /srv
+
+  - name: build docker image from dockerfile
+    docker_image_: 
+      name: "{{docker_image_name:}}"
+      build:
+        pull: yes
+        path: /srv/"{{dockerfile_folder}}/"
+      state: present
+      source: build
+
+  - name: Launch docker container
+    docker_container:
+      name: "{{docker_container_name:}}"
+      image: "{{docker_image_name:}}"
+      state: started
+      ports:
+      - "{{patting_ssh_port}}:22"
+      - "{{patting_http_port. 80}}:8080"
+    register: dockee_info
+
+    lineinfile:
+      path: hosts
+      inserafter: '^\[containers]'
+      firstmatch: yes
+      line: "{{docker_info.ansible_facts.docker_container.NetworkSettings.IPAddress}}"
+      state: present
